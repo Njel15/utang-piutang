@@ -3,26 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catat Utang Piutang</title>
+<title>Utang Piutang</title>
 
 <style>
 :root{
   --blue:#2563eb;
   --bg:#f4f6f8;
-  --card:#ffffff;
+  --card:#fff;
   --border:#e5e7eb;
-  --muted:#6b7280;
   --plus:#16a34a;
   --minus:#dc2626;
+  --muted:#6b7280;
 }
-
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:system-ui,sans-serif;
+  font-family:system-ui;
   background:var(--bg);
 }
-
 .app{
   max-width:420px;
   margin:auto;
@@ -30,115 +28,88 @@ body{
   display:flex;
   flex-direction:column;
 }
-
-header{
-  text-align:center;
-  padding:18px;
-}
-
+header{text-align:center;padding:16px}
 main{flex:1;padding:16px}
-
 .card{
   background:var(--card);
   padding:16px;
   border-radius:16px;
 }
-
-label{
-  font-size:13px;
-  font-weight:600;
-  margin-top:12px;
-  display:block;
-}
-
+label{font-size:13px;font-weight:600;margin-top:12px;display:block}
 input,select,textarea{
   width:100%;
   padding:12px;
+  margin-top:6px;
   border-radius:10px;
   border:1px solid var(--border);
-  margin-top:6px;
 }
-
 button{
-  margin-top:16px;
   width:100%;
   padding:14px;
+  margin-top:16px;
   border:none;
   border-radius:12px;
   background:var(--blue);
-  color:white;
+  color:#fff;
   font-weight:700;
 }
-
 .history{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
 }
-
-.column{
+.col{
   background:#f9fafb;
-  padding:12px;
   border-radius:14px;
+  padding:10px;
 }
-
 .total{text-align:center;font-weight:700;margin-bottom:8px}
-
 .item{
-  background:white;
+  background:#fff;
   border:1px solid var(--border);
+  border-radius:10px;
   padding:8px;
-  border-radius:8px;
   margin-bottom:6px;
   font-size:13px;
   position:relative;
 }
-
 .item small{color:var(--muted)}
-
 .menu{
   position:absolute;
-  right:6px;
   top:6px;
+  right:6px;
   cursor:pointer;
 }
-
 .menu-box{
   display:none;
   position:absolute;
   right:0;
   top:22px;
-  background:white;
+  background:#fff;
   border:1px solid var(--border);
   border-radius:8px;
 }
-
 .menu-box div{
   padding:8px 12px;
   cursor:pointer;
 }
-
 .menu-box div:hover{background:#f3f4f6}
-
 .plus{color:var(--plus)}
 .minus{color:var(--minus)}
-
 nav{
   position:sticky;
   bottom:0;
   display:flex;
   border-top:1px solid var(--border);
-  background:white;
+  background:#fff;
 }
-
 nav button{
   flex:1;
-  border:none;
   padding:14px;
-  font-weight:600;
+  border:none;
   background:none;
+  font-weight:600;
 }
-
 .active{background:#eef2ff}
 </style>
 </head>
@@ -171,29 +142,29 @@ nav button{
     <label>Catatan</label>
     <textarea id="note"></textarea>
 
-    <button onclick="addTx()">Simpan</button>
+    <button onclick="addTx()">Simpan Transaksi</button>
   </div>
 </main>
 
 <!-- HISTORY -->
 <main id="history" style="display:none">
   <div class="history">
-    <div class="column">
+    <div class="col">
       <h3>Njel</h3>
       <div id="totalNjel" class="total"></div>
-      <div id="logNjel"></div>
+      <div id="listNjel"></div>
     </div>
-    <div class="column">
+    <div class="col">
       <h3>Ria</h3>
       <div id="totalRia" class="total"></div>
-      <div id="logRia"></div>
+      <div id="listRia"></div>
     </div>
   </div>
 </main>
 
 <nav>
-  <button class="active" onclick="tab('home',this)">🏠 Home</button>
-  <button onclick="tab('history',this)">📜 History</button>
+  <button class="active" onclick="switchTab('home',this)">🏠 Home</button>
+  <button onclick="switchTab('history',this)">📜 History</button>
 </nav>
 
 </div>
@@ -201,7 +172,7 @@ nav button{
 <script>
 let db = JSON.parse(localStorage.getItem("utangDB")) || {
   saldo:{Njel:0,Ria:0},
-  tx:[]
+  transactions:[]
 };
 
 function save(){
@@ -226,18 +197,24 @@ function addTx(){
   db.saldo.Njel+=njel;
   db.saldo.Ria+=ria;
 
-  db.tx.push({id:Date.now(),date:d,text,njel,ria});
+  db.transactions.push({
+    id:Date.now(),
+    date:d,
+    text,
+    njel,
+    ria
+  });
 
   amount.value="";
   note.value="";
   save();
 }
 
-function del(id){
-  const t = db.tx.find(x=>x.id===id);
+function delTx(id){
+  const t = db.transactions.find(x=>x.id===id);
   db.saldo.Njel-=t.njel;
   db.saldo.Ria-=t.ria;
-  db.tx=db.tx.filter(x=>x.id!==id);
+  db.transactions=db.transactions.filter(x=>x.id!==id);
   save();
 }
 
@@ -245,26 +222,24 @@ function render(){
   totalNjel.innerHTML=`<span class="${db.saldo.Njel>=0?'plus':'minus'}">${db.saldo.Njel}</span>`;
   totalRia.innerHTML=`<span class="${db.saldo.Ria>=0?'plus':'minus'}">${db.saldo.Ria}</span>`;
 
-  logNjel.innerHTML="";
-  logRia.innerHTML="";
+  listNjel.innerHTML="";
+  listRia.innerHTML="";
 
-  db.tx.forEach(t=>{
+  db.transactions.forEach(t=>{
     const item = `
       <div class="item">
         <div class="menu" onclick="this.nextElementSibling.style.display='block'">⋮</div>
         <div class="menu-box">
-          <div onclick="del(${t.id})">Hapus</div>
+          <div onclick="delTx(${t.id})">Hapus</div>
         </div>
-        <small>${t.date}</small>
-        ${t.text}
+        <small>${t.date}</small>${t.text}
       </div>`;
-
-    if(t.njel!==0) logNjel.innerHTML+=item;
-    if(t.ria!==0) logRia.innerHTML+=item;
+    if(t.njel!==0) listNjel.innerHTML+=item;
+    if(t.ria!==0) listRia.innerHTML+=item;
   });
 }
 
-function tab(id,btn){
+function switchTab(id,btn){
   home.style.display=id==="home"?"block":"none";
   history.style.display=id==="history"?"block":"none";
   document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
